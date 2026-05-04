@@ -323,9 +323,24 @@
   const floatSend    = document.getElementById('chatbot-send-float');
   let floatInit      = false;
 
+  function openFloatBot() {
+    if (!floatWindow) return;
+    floatWindow.hidden = false;
+    floatWindow.style.display = 'flex';
+
+    if (fab) {
+      fab.setAttribute('aria-expanded', 'true');
+      const chatIcon  = fab.querySelector('.fab-chat-icon');
+      const closeIcon = fab.querySelector('.fab-close-icon');
+      if (chatIcon) chatIcon.hidden = true;
+      if (closeIcon) closeIcon.hidden = false;
+    }
+  }
+
   function closeFloatBot() {
     if (!floatWindow) return;
     floatWindow.hidden = true;
+    floatWindow.style.display = 'none';
 
     if (fab) {
       fab.setAttribute('aria-expanded', 'false');
@@ -347,14 +362,14 @@
 
   if (fab && floatWindow) {
     fab.addEventListener('click', () => {
-      const isOpen = floatWindow.hidden;
-      floatWindow.hidden = !isOpen;
-      fab.setAttribute('aria-expanded', isOpen.toString());
-      const chatIcon  = fab.querySelector('.fab-chat-icon');
-      const closeIcon = fab.querySelector('.fab-close-icon');
-      if (chatIcon)  chatIcon.hidden  = isOpen;
-      if (closeIcon) closeIcon.hidden = !isOpen;
-      if (isOpen) { initFloatBot(); floatInput && floatInput.focus(); }
+      const isExpanded = fab.getAttribute('aria-expanded') === 'true';
+      if (isExpanded) {
+        closeFloatBot();
+      } else {
+        openFloatBot();
+        initFloatBot();
+        if (floatInput) floatInput.focus();
+      }
     });
   }
 
@@ -370,6 +385,11 @@
       e.stopPropagation();
       closeFloatBot();
     }, { passive: false });
+    floatClose.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeFloatBot();
+    });
   }
 
   if (floatSend && floatInput && floatMsgs) {
@@ -381,6 +401,12 @@
 
   // Close float window on outside click
   document.addEventListener('click', e => {
+    if (e.target && e.target.closest('#chatbot-close-float')) {
+      e.preventDefault();
+      closeFloatBot();
+      return;
+    }
+
     if (floatWindow && !floatWindow.hidden &&
         !floatWindow.contains(e.target) && (!fab || !fab.contains(e.target))) {
       closeFloatBot();
