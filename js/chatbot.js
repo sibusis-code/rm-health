@@ -323,6 +323,19 @@
   const floatSend    = document.getElementById('chatbot-send-float');
   let floatInit      = false;
 
+  function closeFloatBot() {
+    if (!floatWindow) return;
+    floatWindow.hidden = true;
+
+    if (fab) {
+      fab.setAttribute('aria-expanded', 'false');
+      const chatIcon  = fab.querySelector('.fab-chat-icon');
+      const closeIcon = fab.querySelector('.fab-close-icon');
+      if (chatIcon) chatIcon.hidden = false;
+      if (closeIcon) closeIcon.hidden = true;
+    }
+  }
+
   function initFloatBot() {
     if (floatInit) return;
     floatInit = true;
@@ -345,14 +358,19 @@
     });
   }
 
-  floatClose && floatClose.addEventListener('click', () => {
-    floatWindow.hidden = true;
-    fab.setAttribute('aria-expanded', 'false');
-    const chatIcon  = fab.querySelector('.fab-chat-icon');
-    const closeIcon = fab.querySelector('.fab-close-icon');
-    if (chatIcon)  chatIcon.hidden  = false;
-    if (closeIcon) closeIcon.hidden = true;
-  });
+  if (floatClose) {
+    // Use both click and touchend to support mobile browsers consistently.
+    floatClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeFloatBot();
+    });
+    floatClose.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeFloatBot();
+    }, { passive: false });
+  }
 
   if (floatSend && floatInput && floatMsgs) {
     floatSend.addEventListener('click', () => handleChat(floatInput, floatMsgs, null));
@@ -364,9 +382,15 @@
   // Close float window on outside click
   document.addEventListener('click', e => {
     if (floatWindow && !floatWindow.hidden &&
-        !floatWindow.contains(e.target) && !fab.contains(e.target)) {
-      floatWindow.hidden = true;
-      fab.setAttribute('aria-expanded', 'false');
+        !floatWindow.contains(e.target) && (!fab || !fab.contains(e.target))) {
+      closeFloatBot();
+    }
+  });
+
+  // Keyboard close support for accessibility.
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && floatWindow && !floatWindow.hidden) {
+      closeFloatBot();
     }
   });
 
